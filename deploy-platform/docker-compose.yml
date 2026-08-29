@@ -1,0 +1,45 @@
+services:
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "127.0.0.1:${GANTRY_MYSQL_PORT:-13306}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "${GANTRY_MYSQL_ROOT_PASSWORD:?请在 .env 中设置 GANTRY_MYSQL_ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${GANTRY_MYSQL_DATABASE:-gantry}"
+      MYSQL_USER: "${GANTRY_MYSQL_USER:-gantry}"
+      MYSQL_PASSWORD: "${GANTRY_MYSQL_PASSWORD:?请在 .env 中设置 GANTRY_MYSQL_PASSWORD}"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysql -h 127.0.0.1 -u\"$${MYSQL_USER}\" -p\"$${MYSQL_PASSWORD}\" \"$${MYSQL_DATABASE}\" -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    ports:
+      - "127.0.0.1:${GANTRY_RABBITMQ_PORT:-5673}:5672"
+      - "127.0.0.1:${GANTRY_RABBITMQ_MANAGEMENT_PORT:-15673}:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: "${GANTRY_RABBITMQ_USER:-gantry}"
+      RABBITMQ_DEFAULT_PASS: "${GANTRY_RABBITMQ_PASSWORD:?请在 .env 中设置 GANTRY_RABBITMQ_PASSWORD}"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:${GANTRY_REDIS_PORT:-16379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  mysql-data:

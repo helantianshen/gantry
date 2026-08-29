@@ -1,0 +1,12 @@
+.agent/
+.idea/
+.omo/
+.vscode/
+docs/private/
+docs/handoff/
+
+.env
+.env.*
+!.env.example
+*.log
+*.hprof
